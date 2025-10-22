@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Broadridge Financial Solutions - Share Data</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        h1 {
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .result {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: #e9ecef;
+        }
+        .result div {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 id="share-entity-name">Broadridge Financial Solutions</h1>
+        <div class="result">
+            <div>Max Shares Value: <span id="share-max-value"></span></div>
+            <div>Max Shares FY: <span id="share-max-fy"></span></div>
+            <div>Min Shares Value: <span id="share-min-value"></span></div>
+            <div>Min Shares FY: <span id="share-min-fy"></span></div>
+        </div>
+    </div>
+    <script>
+        const CIK = new URLSearchParams(window.location.search).get('CIK') || '0001383312';
+        const endpoint = `https://data.sec.gov/api/xbrl/companyconcept/CIK${CIK}/dei/EntityCommonStockSharesOutstanding.json`;
+
+        fetch(endpoint, {
+            headers: {
+                'User-Agent': 'Broadridge Financial Solutions Share Data Fetcher'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            const entityName = data.entityName;
+            const shares = data.units.shares.filter(share => share.fy > "2020" && !isNaN(share.val));
+            const max = shares.reduce((prev, current) => (prev.val > current.val) ? prev : current);
+            const min = shares.reduce((prev, current) => (prev.val < current.val) ? prev : current);
+
+            document.title = `${entityName} - Share Data`;
+            document.getElementById('share-entity-name').innerText = entityName;
+            document.getElementById('share-max-value').innerText = max.val;
+            document.getElementById('share-max-fy').innerText = max.fy;
+            document.getElementById('share-min-value').innerText = min.val;
+            document.getElementById('share-min-fy').innerText = min.fy;
+        })
+        .catch(error => console.error('Error fetching data:', error));
+    </script>
+</body>
+</html>
